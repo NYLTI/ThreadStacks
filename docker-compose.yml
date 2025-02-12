@@ -1,0 +1,154 @@
+services:
+  # 1️⃣ Config Server
+  configserver:
+    build: ./configserver
+    container_name: configserver
+    ports:
+      - "8888:8888"
+    networks:
+      - app-network
+
+  # 2️⃣ Service Discovery (Eureka)
+  discoveryserver:
+    build: ./discoveryserver
+    container_name: discoveryserver
+    ports:
+      - "8761:8761"
+    networks:
+      - app-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+
+  # 3️⃣ MySQL Database
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: threadstack
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+    networks:
+      - app-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+
+  # 4️⃣ MongoDB for Threads
+  mongodb-threads:
+    image: mongo:6.0
+    container_name: mongodb-threads
+    restart: always
+    ports:
+      - "27018:27017"
+    networks:
+      - app-network
+    volumes:
+      - mongo-threads-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+
+  # 5️⃣ MongoDB for Rooms
+  mongodb-rooms:
+    image: mongo:6.0
+    container_name: mongodb-rooms
+    restart: always
+    ports:
+      - "27019:27017"
+    networks:
+      - app-network
+    volumes:
+      - mongo-rooms-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+
+  # 6️⃣ User Service (7000-7005)
+  user-service:
+    build: ./user
+    deploy:
+      replicas: 3
+    depends_on:
+      configserver:
+        condition: service_healthy
+      discoveryserver:
+        condition: service_healthy
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - app-network
+    expose:
+      - "8080"
+
+  # 7️⃣ Thread Service (8000-8005)
+  thread-service:
+    build: ./thread
+    deploy:
+      replicas: 3
+    depends_on:
+      configserver:
+        condition: service_healthy
+      discoveryserver:
+        condition: service_healthy
+      mongodb-threads:
+        condition: service_healthy
+    networks:
+      - app-network
+    expose:
+      - "8080"
+
+  # 8️⃣ Room Service (9000-9005)
+  room-service:
+    build: ./rooms
+    deploy:
+      replicas: 3
+    depends_on:
+      configserver:
+        condition: service_healthy
+      discoveryserver:
+        condition: service_healthy
+      mongodb-rooms:
+        condition: service_healthy
+    networks:
+      - app-network
+    expose:
+      - "8080"
+      
+  gateway-service:
+    build: ./gateway
+    container_name: gateway
+    networks:
+      - app-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+      discoveryserver:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discoveryserver:8761/eureka/
+
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  mongo-threads-data:
+  mongo-rooms-data:
