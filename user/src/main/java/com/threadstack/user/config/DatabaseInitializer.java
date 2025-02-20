@@ -13,7 +13,7 @@ import java.sql.Statement;
 @Configuration
 public class DatabaseInitializer {
 
-	@Value("${spring.datasource.url}")
+	@Value("${spring.r2dbc.url}")
 	private String jdbcUrl;
 
 	@Value("${spring.r2dbc.username}")
@@ -22,7 +22,7 @@ public class DatabaseInitializer {
 	@Value("${spring.r2dbc.password}")
 	private String dbPassword;
 
-	private static final String DATABASE_NAME = "threadstack";
+	private static final String DATABASE_NAME = "threadstacks";
 
 	@Bean
 	public CommandLineRunner initializeDatabase() {

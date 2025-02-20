@@ -1,5 +1,5 @@
 services:
-  # 1️⃣ Config Server
+  # Config Server
   configserver:
     build: ./configserver
     container_name: configserver
@@ -8,7 +8,7 @@ services:
     networks:
       - app-network
 
-  # 2️⃣ Service Discovery (Eureka)
+  # Service Discovery (Eureka)
   discoveryserver:
     build: ./discoveryserver
     container_name: discoveryserver
@@ -20,7 +20,7 @@ services:
       configserver:
         condition: service_healthy
 
-  # 3️⃣ MySQL Database
+  # MySQL Database
   mysql-db:
     image: mysql:8.0
     container_name: mysql-db
@@ -42,7 +42,7 @@ services:
       timeout: 2s
       retries: 10
 
-  # 4️⃣ MongoDB for Threads
+  # MongoDB for Threads
   mongodb-threads:
     image: mongo:6.0
     container_name: mongodb-threads
@@ -59,7 +59,7 @@ services:
       timeout: 2s
       retries: 10
 
-  # 5️⃣ MongoDB for Rooms
+  # MongoDB for Rooms
   mongodb-rooms:
     image: mongo:6.0
     container_name: mongodb-rooms
@@ -76,11 +76,11 @@ services:
       timeout: 2s
       retries: 10
 
-  # 6️⃣ User Service (7000-7005)
+  # User Service
   user-service:
     build: ./user
     deploy:
-      replicas: 3
+      replicas: 2
     depends_on:
       configserver:
         condition: service_healthy
@@ -92,12 +92,14 @@ services:
       - app-network
     expose:
       - "8080"
+    environment: 
+     - SPRING_PROFILES_ACTIVE=prod
 
-  # 7️⃣ Thread Service (8000-8005)
+  # Thread Service
   thread-service:
     build: ./thread
     deploy:
-      replicas: 3
+      replicas: 2
     depends_on:
       configserver:
         condition: service_healthy
@@ -109,12 +111,14 @@ services:
       - app-network
     expose:
       - "8080"
+    environment: 
+     - SPRING_PROFILES_ACTIVE=prod
 
-  # 8️⃣ Room Service (9000-9005)
+  # Room Service
   room-service:
     build: ./rooms
     deploy:
-      replicas: 3
+      replicas: 2
     depends_on:
       configserver:
         condition: service_healthy
@@ -126,6 +130,8 @@ services:
       - app-network
     expose:
       - "8080"
+    environment: 
+     - SPRING_PROFILES_ACTIVE=prod
       
   gateway-service:
     build: ./gateway
@@ -142,7 +148,6 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discoveryserver:8761/eureka/
-
 
 networks:
   app-network:

@@ -1,7 +1,7 @@
 package com.threadstack.user.controller;
 
-import com.threadstack.user.dto.UserDTO;
 import com.threadstack.user.model.User;
+import com.threadstack.user.model.UserDTO;
 import com.threadstack.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

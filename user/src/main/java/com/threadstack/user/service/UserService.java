@@ -1,10 +1,10 @@
 package com.threadstack.user.service;
 
-import com.threadstack.user.dto.UserDTO;
 import com.threadstack.user.exception.EmailAlreadyExistsException;
 import com.threadstack.user.exception.UsernameAlreadyExistsException;
 import com.threadstack.user.model.Role;
 import com.threadstack.user.model.User;
+import com.threadstack.user.model.UserDTO;
 import com.threadstack.user.repository.UserRepository;
 
 import java.time.LocalDateTime;

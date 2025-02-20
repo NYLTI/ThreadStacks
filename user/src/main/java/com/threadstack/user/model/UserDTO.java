@@ -1,12 +1,10 @@
-package com.threadstack.user.dto;
+package com.threadstack.user.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-
-import com.threadstack.user.model.Role;
 
 @Data
 @NoArgsConstructor
