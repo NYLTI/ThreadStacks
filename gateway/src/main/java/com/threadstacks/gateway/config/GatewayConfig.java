@@ -21,10 +21,9 @@ public class GatewayConfig {
 
     @Bean
     public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
-	return builder.routes().route("user-service",
-		r -> r.path("/users/register").filters(f -> f.filter(basicTokenFilter)).uri("lb://USER-SERVICE"))
-		.route("user-service",
-			r -> r.path("/auth/login").filters(f -> f.filter(basicTokenFilter)).uri("lb://USER-SERVICE"))
+	return builder.routes().route("auth-service",
+		r -> r.path("/users/register", "auth/login").filters(f -> f.filter(basicTokenFilter)).uri("lb://USER-SERVICE"))
+
 		.route("user-service",
 			r -> r.path("/users/**").filters(f -> f.filter(jwtAuthenticationFilter))
 				.uri("lb://USER-SERVICE"))

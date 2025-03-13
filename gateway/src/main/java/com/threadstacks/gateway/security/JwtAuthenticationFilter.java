@@ -41,6 +41,12 @@ public class JwtAuthenticationFilter implements GatewayFilter {
                     .parseClaimsJws(token);
 
             Claims claims = claimsJws.getBody();
+            String userId = claims.getSubject();
+            
+            ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                    .header("X-User-Id", userId)
+                    .build();
+               
 
             String roleString = claims.get("role", String.class);
 
@@ -48,6 +54,8 @@ public class JwtAuthenticationFilter implements GatewayFilter {
 
             exchange.getAttributes().put("claims", claims);
             exchange.getAttributes().put("role", roleString);
+            
+            return chain.filter(exchange.mutate().request(modifiedRequest).build());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -55,6 +63,5 @@ public class JwtAuthenticationFilter implements GatewayFilter {
             return exchange.getResponse().setComplete();
         }
 
-        return chain.filter(exchange);
     }
 }
