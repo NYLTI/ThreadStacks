@@ -8,17 +8,24 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.beans.factory.annotation.Value;
+
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKey;
 import reactor.core.publisher.Mono;
 
 @Configuration
 public class SecurityConfig {
+
+    @Value("${jwt.secret}") 
+    private String secretKey;
 
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
         http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/auth/**", "/users/**").permitAll()
+                .pathMatchers("/auth/**", "/users/register").permitAll()
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
@@ -36,14 +43,14 @@ public class SecurityConfig {
     private JwtAuthenticationConverter customJwtAuthenticationConverter() {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_"); // Ensures roles are prefixed properly
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return jwtAuthenticationConverter;
     }
 
     @Bean
     public ReactiveJwtDecoder reactiveJwtDecoder() {
-        String jwkSetUri = "http://auth-server/.well-known/jwks.json"; // Replace with actual Auth Server URL
-        return NimbusReactiveJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        SecretKey hmacKey = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
+        return NimbusReactiveJwtDecoder.withSecretKey(hmacKey).build();
     }
 }

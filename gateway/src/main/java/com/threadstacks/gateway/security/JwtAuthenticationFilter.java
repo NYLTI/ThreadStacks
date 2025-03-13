@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
@@ -13,12 +14,12 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.security.Key;
-import java.util.Base64;
 
 @Component
 public class JwtAuthenticationFilter implements GatewayFilter {
 
-    private static final String SECRET_KEY = "your-very-secure-secret-key-change-this";
+    @Value("${jwt.secret}") 
+    private String secretKey;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -33,16 +34,23 @@ public class JwtAuthenticationFilter implements GatewayFilter {
         String token = authHeader.substring(7);
 
         try {
-            Key key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY));
+            Key key = Keys.hmacShaKeyFor(secretKey.getBytes()); 
             Jws<Claims> claimsJws = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
 
             Claims claims = claimsJws.getBody();
+
+            String roleString = claims.get("role", String.class);
+
+            System.out.println("Extracted claims: " + claims);
+
             exchange.getAttributes().put("claims", claims);
+            exchange.getAttributes().put("role", roleString);
 
         } catch (Exception e) {
+            e.printStackTrace();
             exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
