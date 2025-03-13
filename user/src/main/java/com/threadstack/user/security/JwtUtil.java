@@ -3,11 +3,13 @@ package com.threadstack.user.security;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.threadstack.user.model.Role;
+
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
@@ -19,13 +21,18 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expirationTime;
 
-    private final Key key;
+    private Key getSigningKey() {
+        if (secretKey == null || secretKey.isEmpty()) {
+            throw new IllegalStateException("JWT Secret Key is missing! Set 'jwt.secret' in application.properties.");
+        }
 
-    public JwtUtil() {
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        String encodedKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
+        return Keys.hmacShaKeyFor(encodedKey.getBytes());
     }
 
-    public String generateToken(String userId, String username, String role) {
+    public String generateToken(String userId, String username, Role role) {
+        Key key = getSigningKey();
+
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("username", username)
