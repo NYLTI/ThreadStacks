@@ -21,16 +21,17 @@ public class GatewayConfig {
 
     @Bean
     public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
-	return builder.routes().route("auth-service",
-		r -> r.path("/users/register", "auth/login").filters(f -> f.filter(basicTokenFilter)).uri("lb://USER-SERVICE"))
-
+	return builder.routes()
+		.route("auth-service",
+			r -> r.path("/users/register", "/auth/login").filters(f -> f.filter(basicTokenFilter))
+				.uri("lb://USER-SERVICE"))
 		.route("user-service",
 			r -> r.path("/users/**").filters(f -> f.filter(jwtAuthenticationFilter))
 				.uri("lb://USER-SERVICE"))
 		.route("thread-service",
-			r -> r.path("/thread/**").filters(f -> f.filter(jwtAuthenticationFilter))
+			r -> r.path("/threads/**").filters(f -> f.filter(jwtAuthenticationFilter))
 				.uri("lb://THREAD-SERVICE"))
-		.route("room-service", r -> r.path("/room/**").filters(f -> f.filter(jwtAuthenticationFilter))
+		.route("room-service", r -> r.path("/rooms/**").filters(f -> f.filter(jwtAuthenticationFilter))
 			.uri("lb://ROOM-SERVICE"))
 		.build();
     }
