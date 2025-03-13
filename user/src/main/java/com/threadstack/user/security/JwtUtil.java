@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import com.threadstack.user.model.Role;
 
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 
 @Component
@@ -26,8 +25,8 @@ public class JwtUtil {
             throw new IllegalStateException("JWT Secret Key is missing! Set 'jwt.secret' in application.properties.");
         }
 
-        String encodedKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
-        return Keys.hmacShaKeyFor(encodedKey.getBytes());
+//        String encodedKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     public String generateToken(String userId, String username, Role role) {
@@ -36,7 +35,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("username", username)
-                .claim("role", role)
+                .claim("role", role.name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(key, SignatureAlgorithm.HS256)
