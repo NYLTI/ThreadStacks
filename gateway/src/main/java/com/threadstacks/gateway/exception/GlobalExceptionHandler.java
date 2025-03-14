@@ -24,6 +24,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
         return ResponseEntity
             .status(500)
-            .body(Map.of("error", "An unexpected error occurred"));
+            .body(Map.of("error", ex.getMessage()));
     }
 }

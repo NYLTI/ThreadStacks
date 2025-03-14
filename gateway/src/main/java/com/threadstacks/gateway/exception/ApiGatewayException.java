@@ -16,7 +16,6 @@ public class ApiGatewayException extends RuntimeException {
     public ApiGatewayException(String message, HttpStatusCode httpStatusCode) {
         super(message);
         this.status = (HttpStatus) httpStatusCode;
-        System.err.println("API Gateway Exception: " + message); // Debugging
     }
     
     public HttpStatusCode getStatus() {

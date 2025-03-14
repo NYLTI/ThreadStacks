@@ -50,8 +50,6 @@ public class JwtAuthenticationFilter implements GatewayFilter {
 
             String roleString = claims.get("role", String.class);
 
-            System.out.println("Extracted claims: " + claims);
-
             exchange.getAttributes().put("claims", claims);
             exchange.getAttributes().put("role", roleString);
             
