@@ -29,10 +29,8 @@ public class UserEventProducer {
             String eventJson = objectMapper.writeValueAsString(event);
 
             kafkaTemplate.send(userCreatedTopic, eventJson);
-            System.out.println("✅ Kafka Event Sent: " + eventJson);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            System.err.println("❌ Failed to serialize UserCreatedEvent for Kafka");
         }
     }
 }
