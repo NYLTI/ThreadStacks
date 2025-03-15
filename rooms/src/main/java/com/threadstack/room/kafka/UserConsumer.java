@@ -20,19 +20,13 @@ public class UserConsumer {
 
     @KafkaListener(topics = "user-created-topic", groupId = "room-service-group")
     public void consumeUser(String userJson) {
-        System.out.println("Received Raw Kafka Event: " + userJson);
-
         try {
             User user = objectMapper.readValue(userJson, User.class);
-            System.out.println("Parsed User: " + user);
-
             userRepository.save(user)
-                .doOnSuccess(savedUser -> System.out.println("User saved to MongoDB: " + savedUser))
                 .subscribe();
 
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            System.err.println("Failed to parse Kafka event: " + userJson);
         }
     }
 }
