@@ -2,6 +2,7 @@ package com.threadstack.user.service;
 
 import com.threadstack.user.exception.EmailAlreadyExistsException;
 import com.threadstack.user.exception.UsernameAlreadyExistsException;
+import com.threadstack.user.kafka.UserEventProducer;
 import com.threadstack.user.model.Role;
 import com.threadstack.user.model.User;
 import com.threadstack.user.model.UserDTO;
@@ -19,11 +20,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private UserEventProducer userEventProducer;
     
     @Autowired
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, UserEventProducer userEventProducer) {
     	this.passwordEncoder = passwordEncoder;
     	this.userRepository = userRepository;
+    	this.userEventProducer = userEventProducer;
     }
 
     public Mono<UserDTO> registerUser(User user) {
@@ -35,7 +38,10 @@ public class UserService {
                     user.setPassword(passwordEncoder.encode(user.getPassword()))
                     .setCreatedAt(LocalDateTime.now())
                     .setRole(Role.USER);
-                    return userRepository.save(user).map(this::convertToDTO);
+                    return userRepository.save(user)
+                            .doOnSuccess(savedUser -> userEventProducer.sendUserCreatedEvent(savedUser)) // Send Kafka event
+                            .map(this::convertToDTO);
+//                    return userRepository.save(user).map(this::convertToDTO);
                 }));
     }
 
