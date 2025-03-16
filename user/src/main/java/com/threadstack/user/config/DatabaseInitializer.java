@@ -54,6 +54,17 @@ public class DatabaseInitializer {
 						""";
 				statement.executeUpdate(createTableSQL);
 				System.out.println("✅ Table 'users' checked/created successfully!");
+				
+				String createFailedEventsTableSQL = """
+				        CREATE TABLE IF NOT EXISTS failed_events (
+				            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+				            topic VARCHAR(255) NOT NULL,
+				            event_data TEXT NOT NULL,
+				            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+				        );
+				    """;
+				statement.executeUpdate(createFailedEventsTableSQL);
+				System.out.println("✅ Table 'failed_events' checked/created successfully!");
 
 			} catch (SQLException e) {
 				System.err.println("❌ Database or table creation failed: " + e.getMessage());

@@ -38,10 +38,17 @@ public class UserService {
                     user.setPassword(passwordEncoder.encode(user.getPassword()))
                     .setCreatedAt(LocalDateTime.now())
                     .setRole(Role.USER);
+                    
                     return userRepository.save(user)
-                            .doOnSuccess(savedUser -> userEventProducer.sendUserCreatedEvent(savedUser)) // Send Kafka event
+                            .doOnSuccess(savedUser ->{
+                        	try {
+                        	    userEventProducer.sendUserCreatedEvent(savedUser);
+                        	}
+                        	catch(Exception ex){
+                        	    
+                        	}
+                            })
                             .map(this::convertToDTO);
-//                    return userRepository.save(user).map(this::convertToDTO);
                 }));
     }
 
