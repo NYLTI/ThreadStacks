@@ -151,5 +151,5 @@ public class KeycloakService {
 	failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> RetryStatus.SHOULDRETRYKEYCLOAK.set(true))
 		.subscribe();
     }
-
+    
 }

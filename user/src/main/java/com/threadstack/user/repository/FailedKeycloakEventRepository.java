@@ -11,6 +11,6 @@ import reactor.core.publisher.Mono;
 public interface FailedKeycloakEventRepository extends R2dbcRepository<FailedKeycloakEvent, Long> {
     Flux<FailedKeycloakEvent> findAllByOrderByCreatedAtAsc();
     public Optional<Mono<FailedKeycloakEvent>> findByUsernameAndEventType(String username, String eventType);
-    public Optional<Mono<FailedKeycloakEvent>> findByUsernameAndRole(String username, String role);
-    public Optional<Mono<FailedKeycloakEvent>> findByRole(String role);
+    public Optional<Mono<FailedKeycloakEvent>> findByUsernameAndRoleName(String username, String role);
+    public Optional<Mono<FailedKeycloakEvent>> findByRoleName(String role);
 }
