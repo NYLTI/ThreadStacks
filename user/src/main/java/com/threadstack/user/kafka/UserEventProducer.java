@@ -10,24 +10,25 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.threadstack.user.kafka.dto.UserCreatedEvent;
 import com.threadstack.user.model.User;
-import com.threadstack.user.repository.FailedEventRepository;
-import com.threadstack.user.model.FailedEvent;
+import com.threadstack.user.repository.FailedKafkaEventRepository;
+import com.threadstack.user.util.RetryStatus;
+import com.threadstack.user.model.FailedKafkaEvent;
 
 @Service
 public class UserEventProducer {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
-    private final FailedEventRepository failedEventRepository;
+    private final FailedKafkaEventRepository failedKafkaEventRepository;
 
     @Value("${spring.kafka.topic.user-created}")
     private String userCreatedTopic;
 
     public UserEventProducer(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper,
-	    FailedEventRepository failedEventRepository) {
+	    FailedKafkaEventRepository failedKafkaEventRepository) {
 	this.kafkaTemplate = kafkaTemplate;
 	this.objectMapper = objectMapper;
-	this.failedEventRepository = failedEventRepository;
+	this.failedKafkaEventRepository = failedKafkaEventRepository;
     }
 
     public void sendUserCreatedEvent(User user) {
@@ -43,9 +44,9 @@ public class UserEventProducer {
     }
 
     private void queueFailedEvent(String eventJson) {
-	FailedEvent failedEvent = new FailedEvent(userCreatedTopic, eventJson);
-	failedEventRepository.save(failedEvent)
-        .doOnSuccess(savedEvent -> RetryStatus.shouldRetry.set(true))
+	FailedKafkaEvent failedKafkaEvent = new FailedKafkaEvent(userCreatedTopic, eventJson);
+	failedKafkaEventRepository.save(failedKafkaEvent)
+        .doOnSuccess(savedEvent -> RetryStatus.SHOULDRETRYKAFKA.set(true))
         .subscribe();
     }
 }

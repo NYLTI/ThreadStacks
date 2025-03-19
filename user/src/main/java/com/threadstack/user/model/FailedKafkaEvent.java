@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("failed_events")
-public class FailedEvent {
+@Table("failed_kafka_events")
+public class FailedKafkaEvent {
 
     @Id
     private Long id;
@@ -19,7 +19,7 @@ public class FailedEvent {
     private String eventData;
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public FailedEvent(String topic, String eventData) {
+    public FailedKafkaEvent(String topic, String eventData) {
         this.topic = topic;
         this.eventData = eventData;
         this.createdAt = LocalDateTime.now();

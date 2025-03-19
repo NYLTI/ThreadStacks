@@ -1,4 +1,4 @@
-package com.threadstack.user.config;
+package com.threadstack.user.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,3 +18,5 @@ public class SecurityConfig {
                 .build();
     }
 }
+
+

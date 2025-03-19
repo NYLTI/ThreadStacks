@@ -1,5 +1,6 @@
 package com.threadstack.user.service;
 
+import com.threadstack.user.config.keycloak.KeycloakService;
 import com.threadstack.user.exception.EmailAlreadyExistsException;
 import com.threadstack.user.exception.UsernameAlreadyExistsException;
 import com.threadstack.user.kafka.UserEventProducer;
@@ -21,12 +22,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private UserEventProducer userEventProducer;
+    private final KeycloakService keycloakService;
     
     @Autowired
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, UserEventProducer userEventProducer) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, UserEventProducer userEventProducer, KeycloakService keycloakService) {
     	this.passwordEncoder = passwordEncoder;
     	this.userRepository = userRepository;
     	this.userEventProducer = userEventProducer;
+    	this.keycloakService = keycloakService;
     }
 
     public Mono<UserDTO> registerUser(User user) {
@@ -43,6 +46,7 @@ public class UserService {
                             .doOnSuccess(savedUser ->{
                         	try {
                         	    userEventProducer.sendUserCreatedEvent(savedUser);
+                        	    keycloakService.createUser(savedUser.getUsername(), savedUser.getEmail(), savedUser.getPassword());
                         	}
                         	catch(Exception ex){
                         	    

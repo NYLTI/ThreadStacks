@@ -125,6 +125,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-admin-client</artifactId>
+			<version>22.0.5</version>
+		</dependency>
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
