@@ -46,7 +46,7 @@ public class UserService {
                             .doOnSuccess(savedUser ->{
                         	try {
                         	    userEventProducer.sendUserCreatedEvent(savedUser);
-                        	    keycloakService.createUser(savedUser.getUsername(), savedUser.getEmail(), savedUser.getPassword());
+                        	    keycloakService.createUser(savedUser.getUsername(), savedUser.getEmail(), user.getPassword());
                         	}
                         	catch(Exception ex){
                         	    

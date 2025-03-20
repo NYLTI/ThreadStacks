@@ -6,6 +6,12 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.http.MediaType;
+
+
+import reactor.core.publisher.Mono;
 
 @Component
 public class KeycloakProvider {
@@ -29,7 +35,12 @@ public class KeycloakProvider {
     private String adminPassword;
 
     private Keycloak keycloakInstance = null;
+    
+    private final WebClient webClient;
 
+    public KeycloakProvider() {
+        this.webClient = WebClient.builder().build();
+    }
     /**
      * Lazily initializes and returns a Keycloak instance.
      * Ensures Keycloak is not instantiated at startup to avoid dependency issues.
@@ -58,5 +69,18 @@ public class KeycloakProvider {
             System.err.println("Failed to fetch access token: " + e.getMessage());
             throw new RuntimeException("Keycloak access token retrieval failed.");
         }
+    }
+    
+    public Mono<AccessTokenResponse> getKeycloakToken(String username, String password) {
+        return webClient.post()
+            .uri(serverUrl + "/realms/" + realm + "/protocol/openid-connect/token")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .body(BodyInserters.fromFormData("client_id", clientId)
+                .with("client_secret", clientSecret)
+                .with("grant_type", "password")
+                .with("username", username)
+                .with("password", password))
+            .retrieve()
+            .bodyToMono(AccessTokenResponse.class);
     }
 }
