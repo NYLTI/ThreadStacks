@@ -23,17 +23,13 @@ public class KeycloakRetryService {
     @Scheduled(fixedDelay = 10000)
     public void retryFailedEvents() {
         if (!RetryStatus.SHOULDRETRYKEYCLOAK.get()) return;
-        
-        System.out.println("Checking failed Keycloak events");
-        
+       
         if (keycloakService.isKeycloakAlive()) {
             failedKeycloakEventRepository.findAll()
                 .flatMap(this::processAndDeleteEvent)
                 .doOnComplete(this::checkAndStopRetry)
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
-        } else {
-            System.err.println("Keycloak is still unavailable");
         }
     }
 
@@ -62,7 +58,6 @@ public class KeycloakRetryService {
         failedKeycloakEventRepository.count()
             .doOnSuccess(count -> {
                 if (count == 0) {
-                    System.err.println("Completed all Keycloak retries");
                     RetryStatus.SHOULDRETRYKEYCLOAK.set(false);
                 }
             })

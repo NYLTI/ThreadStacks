@@ -41,10 +41,7 @@ public class KeycloakProvider {
     public KeycloakProvider() {
         this.webClient = WebClient.builder().build();
     }
-    /**
-     * Lazily initializes and returns a Keycloak instance.
-     * Ensures Keycloak is not instantiated at startup to avoid dependency issues.
-     */
+
     public Keycloak getKeycloakInstance() {
         if (keycloakInstance == null) {
             keycloakInstance = KeycloakBuilder.builder()
@@ -58,15 +55,10 @@ public class KeycloakProvider {
         return keycloakInstance;
     }
 
-    /**
-     * Retrieves an access token from Keycloak.
-     * This method is called only when necessary, preventing startup failures if Keycloak is unavailable.
-     */
     public AccessTokenResponse getAccessToken() {
         try {
             return getKeycloakInstance().tokenManager().getAccessToken();
         } catch (Exception e) {
-            System.err.println("Failed to fetch access token: " + e.getMessage());
             throw new RuntimeException("Keycloak access token retrieval failed.");
         }
     }

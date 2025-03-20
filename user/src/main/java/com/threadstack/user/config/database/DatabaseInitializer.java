@@ -34,7 +34,6 @@ public class DatabaseInitializer {
 
 		// Create database if it doesn't exist
 		statement.executeUpdate("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME);
-		System.out.println("✅ Database '" + DATABASE_NAME + "' checked/created successfully!");
 
 		// Switch to the database
 		statement.executeUpdate("USE " + DATABASE_NAME);
@@ -53,7 +52,6 @@ public class DatabaseInitializer {
 			    );
 			""";
 		statement.executeUpdate(createTableSQL);
-		System.out.println("✅ Table 'users' checked/created successfully!");
 
 		String createFailedKafkaEventsTableSQL = """
 			    CREATE TABLE IF NOT EXISTS failed_kafka_events (
@@ -64,8 +62,6 @@ public class DatabaseInitializer {
 			    );
 			""";
 		statement.executeUpdate(createFailedKafkaEventsTableSQL);
-
-		System.out.println("✅ Table 'failed_events' checked/created successfully!");
 
 		String createFailedKeycloakEventsTableSQL = """
 			    CREATE TABLE IF NOT EXISTS failed_keycloak_events (

@@ -26,12 +26,9 @@ public class KafkaRetryService {
     public void retryFailedEvents() {
 	if (!RetryStatus.SHOULDRETRYKAFKA.get())
 	    return;
-	System.out.println("Checking failed events");
 	if (testKafka()) {
 	    failedKafkaEventRepository.findAll().flatMap(this::sendAndDeleteEvent).doOnComplete(this::checkAndStopRetry)
 		    .subscribeOn(Schedulers.boundedElastic()).subscribe();
-	} else {
-	    System.err.println("Kafka is still unavailable");
 	}
     }
 
@@ -57,7 +54,6 @@ public class KafkaRetryService {
     private void checkAndStopRetry() {
 	failedKafkaEventRepository.count().doOnSuccess(count -> {
 	    if (count == 0) {
-		System.err.println("Completed all qs");
 		RetryStatus.SHOULDRETRYKAFKA.set(false);
 	    }
 	}).subscribe();

@@ -49,24 +49,17 @@ public class KeycloakService {
 	    credential.setTemporary(false);
 	    user.setCredentials(Collections.singletonList(credential));
 
-	    // Create user in Keycloak
 	    Response response = keycloak.realm(realm).users().create(user);
 
 	    if (response.getStatus() >= 400) {
 		throw new RuntimeException("Failed to create user in Keycloak. HTTP Status: " + response.getStatus());
 	    }
 
-	    System.out.println("User successfully created in Keycloak: " + username);
-
 	} catch (Exception e) {
-	    System.err.println("Keycloak is down, queuing user creation event...");
 	    queueFailedUserEvent(username, email, password);
 	}
     }
 
-    /**
-     * Assigns a role to an existing user in Keycloak.
-     */
     public void assignRoleToUser(String username, String roleName) {
 	try {
 	    Keycloak keycloak = keycloakProvider.getKeycloakInstance();
@@ -81,12 +74,10 @@ public class KeycloakService {
 	    keycloak.realm("ThreadStacks").users().get(userId).roles().realmLevel()
 		    .add(Collections.singletonList(role));
 	} catch (Exception e) {
-	    System.err.println("Keycloak is down, queuing event in database...");
 	    FailedKeycloakEvent failedEvent = new FailedKeycloakEvent(null, username, roleName, null, "USER", null,
 		    LocalDateTime.now());
 
 	    failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> {
-		System.err.println("Queued failed Keycloak event for retry: " + event);
 		RetryStatus.SHOULDRETRYKEYCLOAK.set(true);
 	    }).doOnError(error -> System.err.println("Failed to queue Keycloak event: " + error.getMessage()))
 		    .subscribe();
@@ -101,21 +92,17 @@ public class KeycloakService {
 
     public void createRoleIfNotExists(String roleName) {
 	Keycloak keycloak = keycloakProvider.getKeycloakInstance();
-	RolesResource rolesResource = keycloak.realm(realm).roles(); // Targeting realm roles, not client roles
+	RolesResource rolesResource = keycloak.realm(realm).roles();
 
 	try {
-	    rolesResource.get(roleName).toRepresentation(); // Check if role exists
-	    System.out.println("Role already exists in realm: " + roleName);
+	    rolesResource.get(roleName).toRepresentation();
 	} catch (NotFoundException e) {
-	    // Role doesn't exist, so create it
 	    RoleRepresentation newRole = new RoleRepresentation();
 	    newRole.setName(roleName);
 	    newRole.setDescription("Dynamically created role for moderation");
 
 	    rolesResource.create(newRole);
-	    System.out.println("Created new realm role: " + roleName);
 	} catch (Exception e) {
-	    System.err.println("Error retrieving realm role " + roleName + ": " + e.getMessage());
 	    throw e;
 	}
     }
@@ -125,7 +112,6 @@ public class KeycloakService {
 	    keycloakProvider.getAccessToken();
 	    return true;
 	} catch (Exception e) {
-	    System.err.println("Keycloak is unreachable: " + e.getMessage());
 	    return false;
 	}
     }
