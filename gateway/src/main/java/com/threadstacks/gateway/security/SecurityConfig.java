@@ -9,8 +9,6 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.http.HttpMethod;
 
-//import io.netty.handler.codec.http.HttpMethod;
-
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -18,27 +16,21 @@ public class SecurityConfig {
     private final JwtAuthConverter jwtAuthConverter;
 
     public SecurityConfig(JwtAuthConverter jwtAuthConverter) {
-        this.jwtAuthConverter = jwtAuthConverter;
+	this.jwtAuthConverter = jwtAuthConverter;
     }
 
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
-        http
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .logout(logout -> logout.disable())
-            .authorizeExchange(exchange -> exchange
-                .pathMatchers(HttpMethod.POST, "/auth/login", "/users/register").permitAll() // Allow these endpoints
-                .anyExchange().authenticated() // Secure everything else
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
-            );
+	http.csrf(ServerHttpSecurity.CsrfSpec::disable).logout(logout -> logout.disable())
+		.authorizeExchange(exchange -> exchange.pathMatchers(HttpMethod.POST, "/auth/login", "/users/register")
+			.permitAll().anyExchange().authenticated())
+		.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)));
 
-        return http.build();
+	return http.build();
     }
-    
+
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
-        return ReactiveJwtDecoders.fromIssuerLocation("http://localhost:8000/realms/ThreadStacks");
+	return ReactiveJwtDecoders.fromIssuerLocation("http://localhost:8000/realms/ThreadStacks");
     }
 }

@@ -31,13 +31,13 @@ public class JwtAuthConverter implements Converter<Jwt, Mono<JwtAuthenticationTo
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
 
         if (realmAccess == null || !realmAccess.containsKey("roles")) {
-            return Collections.emptySet(); // Correct type returned
+            return Collections.emptySet();
         }
 
         Collection<String> roles = (Collection<String>) realmAccess.get("roles");
 
         return roles.stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-                .collect(Collectors.toSet()); // Correct return type
+                .collect(Collectors.toSet());
     }
 }

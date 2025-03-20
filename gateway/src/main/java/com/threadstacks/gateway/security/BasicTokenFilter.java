@@ -21,12 +21,8 @@ public class BasicTokenFilter implements GatewayFilter {
         String path = exchange.getRequest().getURI().getPath();
         
         if (path.startsWith("/auth/login") || path.startsWith("/users/register")) {
-            System.out.println("🔹 Applying BasicTokenFilter");
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            System.out.println("🔍 Authorization Header: " + authHeader);
-
             if (authHeader == null || !authHeader.equals("Basic " + expectedToken)) {
-        	 System.err.println("❌ Unauthorized request to " + path);
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
