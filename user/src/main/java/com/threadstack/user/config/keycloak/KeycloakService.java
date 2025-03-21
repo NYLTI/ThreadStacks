@@ -2,6 +2,7 @@ package com.threadstack.user.config.keycloak;
 
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RolesResource;
+import org.keycloak.representations.idm.ClientScopeRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -16,6 +17,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 
 @Service
 public class KeycloakService {
@@ -97,8 +99,14 @@ public class KeycloakService {
 	    newRole.setName(roleName);
 	    newRole.setDescription("Dynamically created role for moderation");
 	    rolesResource.create(newRole);
+	    RoleRepresentation createdRole = rolesResource.get(roleName).toRepresentation();
+	    String clientScopeId = getRealmRolesClientScopeId();
+	    if (clientScopeId != null) {
+		addRoleToClientScope(createdRole, clientScopeId);
+	    }
 	} catch (Exception e) {
 	    System.err.println(e.getMessage());
+	    e.printStackTrace();
 	}
     }
 
@@ -143,5 +151,23 @@ public class KeycloakService {
 
 	failedKeycloakEventRepository.save(failedEvent)
 		.doOnSuccess(event -> RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true)).subscribe();
+    }
+
+    private String getRealmRolesClientScopeId() {
+	Keycloak keycloak = keycloakProvider.getKeycloakInstance();
+	List<ClientScopeRepresentation> scopes = keycloak.realm(realm).clientScopes().findAll();
+	return scopes.stream().filter(scope -> "realm-roles".equals(scope.getName()))
+		.map(ClientScopeRepresentation::getId).findFirst().orElse(null);
+    }
+
+    private void addRoleToClientScope(RoleRepresentation roleRep, String clientScopeId) {
+	Keycloak keycloak = keycloakProvider.getKeycloakInstance();
+	keycloak.realm(realm)
+	    .clientScopes()
+	    .get(clientScopeId)
+	    .getScopeMappings()
+	    .realmLevel()
+	    .add(Collections.singletonList(roleRep));
+
     }
 }
