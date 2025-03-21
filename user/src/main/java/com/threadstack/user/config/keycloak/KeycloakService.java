@@ -68,6 +68,7 @@ public class KeycloakService {
 		throw new RuntimeException("User not found: " + username);
 
 	    RoleRepresentation role = getRole(roleName);
+	    createRoleIfNotExists(roleName);
 	    if (role == null)
 		throw new RuntimeException("Role not found: " + roleName);
 
@@ -90,7 +91,7 @@ public class KeycloakService {
 	return keycloak.realm(realm).users().search(username).stream().findFirst().orElse(null);
     }
 
-    public void createRoleIfNotExists(String roleName) {
+    private void createRoleIfNotExists(String roleName) {
 	Keycloak keycloak = keycloakProvider.getKeycloakInstance();
 	RolesResource rolesResource = keycloak.realm(realm).roles();
 
@@ -100,10 +101,8 @@ public class KeycloakService {
 	    RoleRepresentation newRole = new RoleRepresentation();
 	    newRole.setName(roleName);
 	    newRole.setDescription("Dynamically created role for moderation");
-
 	    rolesResource.create(newRole);
 	} catch (Exception e) {
-	    throw e;
 	}
     }
 
@@ -136,6 +135,5 @@ public class KeycloakService {
 
 	failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true))
 		.subscribe();
-    }
-    
+    }  
 }

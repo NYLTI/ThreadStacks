@@ -4,19 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.threadstack.room.model.User;
 import com.threadstack.room.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class KafkaEventsListener {
 
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
-
-    public KafkaEventsListener(UserRepository userRepository, ObjectMapper objectMapper) {
-        this.userRepository = userRepository;
-        this.objectMapper = objectMapper;
-    }
 
     @KafkaListener(topics = "user-created-topic", groupId = "room-service-group")
     public void consumeUser(String userJson) {
@@ -26,7 +25,7 @@ public class KafkaEventsListener {
                 .subscribe();
 
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
     }
 }
