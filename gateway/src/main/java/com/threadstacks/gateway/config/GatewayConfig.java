@@ -16,7 +16,7 @@ public class GatewayConfig {
 	return builder.routes()
 		.route("auth-service", r -> r.path("/users/register", "/auth/login").uri("lb://USER-SERVICE"))
 		.route("user-service", r -> r.path("/users/**").uri("lb://USER-SERVICE"))
-		.route("thread-service", r -> r.path("/threads/**").uri("lb://THREAD-SERVICE"))
+		.route("thread-service", r -> r.path("/threads/**", "/replies/**").uri("lb://THREAD-SERVICE"))
 		.route("room-service", r -> r.path("/rooms/**").uri("lb://ROOM-SERVICE")).build();
     }
 }
