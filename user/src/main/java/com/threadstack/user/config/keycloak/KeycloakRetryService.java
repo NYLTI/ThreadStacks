@@ -42,9 +42,6 @@ public class KeycloakRetryService {
                 case "ASSIGN_ROLE":
                     keycloakService.assignRoleToUser(event.getUsername(), event.getRoleName());
                     break;
-                case "CREATE_ROLE":
-                    keycloakService.createRoleIfNotExists(event.getRoleName());
-                    break;
                 default:
                     System.err.println("Unknown Keycloak event type: " + event.getEventType());
                     return;
