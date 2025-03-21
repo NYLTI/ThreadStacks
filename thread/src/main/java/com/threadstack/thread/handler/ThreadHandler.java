@@ -63,7 +63,7 @@ public class ThreadHandler {
 	return threadRepository.findById(threadId)
 		.switchIfEmpty(Mono.error(new ResourceNotFoundException("Thread not found"))).flatMap(thread -> {
 		    if (!userName.equals(thread.getUserName())) {
-			if (thread.getUserName() == null) {
+			if (thread.getUserName() == null && "[deleted]".equalsIgnoreCase(thread.getContent())) {
 			    return ServerResponse.status(HttpStatus.BAD_REQUEST)
 				    .bodyValue("Thread has already been deleted");
 			}
