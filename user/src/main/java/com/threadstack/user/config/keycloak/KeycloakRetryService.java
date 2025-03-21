@@ -3,7 +3,7 @@ package com.threadstack.user.config.keycloak;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.threadstack.user.repository.FailedKeycloakEventRepository;
-import com.threadstack.user.util.RetryStatus;
+import com.threadstack.user.util.RetryUtility;
 import com.threadstack.user.model.FailedKeycloakEvent;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -22,7 +22,7 @@ public class KeycloakRetryService {
 
     @Scheduled(fixedDelay = 10000)
     public void retryFailedEvents() {
-        if (!RetryStatus.SHOULDRETRYKEYCLOAK.get()) return;
+        if (!RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.get()) return;
        
         if (keycloakService.isKeycloakAlive()) {
             failedKeycloakEventRepository.findAll()
@@ -58,7 +58,7 @@ public class KeycloakRetryService {
         failedKeycloakEventRepository.count()
             .doOnSuccess(count -> {
                 if (count == 0) {
-                    RetryStatus.SHOULDRETRYKEYCLOAK.set(false);
+                    RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(false);
                 }
             })
             .subscribe();

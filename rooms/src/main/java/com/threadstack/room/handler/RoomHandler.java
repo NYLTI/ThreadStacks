@@ -9,28 +9,36 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import com.threadstack.room.exception.RoomNameAlreadyExistsException;
+import com.threadstack.room.kafka.KafkaEventsProducer;
 import com.threadstack.room.model.Room;
+import com.threadstack.room.model.RoomCreatedEvent;
 import com.threadstack.room.repository.RoomRepository;
 import com.threadstack.room.util.ValidationUtil;
 
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @Component
+@RequiredArgsConstructor
 public class RoomHandler {
     private final RoomRepository roomRepository;
     private final ValidationUtil validationUtil;
-
-    public RoomHandler(RoomRepository roomRepository, ValidationUtil validationUtil) {
-	this.roomRepository = roomRepository;
-	this.validationUtil = validationUtil;
-    }
+    private final KafkaEventsProducer kafkaEventsProducer;
 
     public Mono<ServerResponse> createRoom(ServerRequest request) {
-	return request.bodyToMono(Room.class).flatMap(validationUtil::validate).flatMap(room -> checkRoomExists(room))
+	return request.bodyToMono(Room.class).flatMap(validationUtil::validate).flatMap(this::checkRoomExists)
 		.flatMap(room -> {
 		    room.getMembers().add(room.getCreatedBy());
 		    room.getModerators().add(room.getCreatedBy());
-		    return roomRepository.save(room);
+		    return roomRepository.save(room).doOnSuccess(savedRoom -> {
+			try {
+			    RoomCreatedEvent event = new RoomCreatedEvent(savedRoom.getName(),
+				    savedRoom.getCreatedBy());
+			    kafkaEventsProducer.sendRoomCreatedEvent(event);
+			} catch (Exception e) {
+			    // Logging already handled in producer
+			}
+		    });
 		}).flatMap(savedRoom -> ServerResponse.created(request.uri()).contentType(MediaType.APPLICATION_JSON)
 			.bodyValue(savedRoom));
     }
@@ -44,7 +52,7 @@ public class RoomHandler {
 
     public Mono<ServerResponse> addMember(ServerRequest request) {
 	String roomId = request.pathVariable("roomId");
-	Long memberId = Long.parseLong(request.pathVariable("memberId"));
+	String memberId = request.pathVariable("memberId");
 
 	return roomRepository.addMember(roomId, memberId)
 		.flatMap(room -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(room))
@@ -53,7 +61,7 @@ public class RoomHandler {
 
     public Mono<ServerResponse> removeMember(ServerRequest request) {
 	String roomId = request.pathVariable("roomId");
-	Long memberId = Long.parseLong(request.pathVariable("memberId"));
+	String memberId = request.pathVariable("memberId");
 
 	return roomRepository.removeMember(roomId, memberId)
 		.flatMap(room -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(room))

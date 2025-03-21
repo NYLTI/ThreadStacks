@@ -5,7 +5,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.threadstack.user.repository.FailedKafkaEventRepository;
-import com.threadstack.user.util.RetryStatus;
+import com.threadstack.user.util.RetryUtility;
 import com.threadstack.user.model.FailedKafkaEvent;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -24,7 +24,7 @@ public class KafkaRetryService {
 
     @Scheduled(fixedDelay = 10000)
     public void retryFailedEvents() {
-	if (!RetryStatus.SHOULDRETRYKAFKA.get())
+	if (!RetryUtility.SHOULDRETRYKAFKA.get())
 	    return;
 	if (testKafka()) {
 	    failedKafkaEventRepository.findAll().flatMap(this::sendAndDeleteEvent).doOnComplete(this::checkAndStopRetry)
@@ -54,7 +54,7 @@ public class KafkaRetryService {
     private void checkAndStopRetry() {
 	failedKafkaEventRepository.count().doOnSuccess(count -> {
 	    if (count == 0) {
-		RetryStatus.SHOULDRETRYKAFKA.set(false);
+		RetryUtility.SHOULDRETRYKAFKA.set(false);
 	    }
 	}).subscribe();
     }

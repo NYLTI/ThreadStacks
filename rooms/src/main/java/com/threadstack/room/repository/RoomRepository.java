@@ -16,16 +16,16 @@ import reactor.core.publisher.Mono;
 public interface RoomRepository extends ReactiveMongoRepository<Room, String> {
     Mono<Room> findByNameIgnoreCase(String name);
 
-    Flux<Room> findByCreatedBy(Long createdBy);
+    Flux<Room> findByCreatedBy(String createdBy);
 
     @Query(value = "{ '_id': ?0 }", fields = "{ 'members': 1 }")
-    Mono<List<Long>> findMembersById(String roomId);
+    Mono<List<String>> findMembersById(String roomId);
 
     @Query("{ '_id': ?0, 'members': { $ne: ?1 } }")
     @Update("{ '$addToSet': { 'members': ?1 } }")
-    Mono<Long> addMember(String roomId, Long memberId);
+    Mono<Long> addMember(String roomId, String memberId);
 
     @Query("{ '_id': ?0 }")
     @Update("{ '$pull': { 'members': ?1 } }")
-    Mono<Long> removeMember(String roomId, Long memberId);
+    Mono<Long> removeMember(String roomId, String memberId);
 }

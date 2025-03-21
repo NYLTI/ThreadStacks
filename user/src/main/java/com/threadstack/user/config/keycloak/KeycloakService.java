@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.threadstack.user.model.FailedKeycloakEvent;
 import com.threadstack.user.repository.FailedKeycloakEventRepository;
-import com.threadstack.user.util.RetryStatus;
+import com.threadstack.user.util.RetryUtility;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -78,7 +78,7 @@ public class KeycloakService {
 		    LocalDateTime.now());
 
 	    failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> {
-		RetryStatus.SHOULDRETRYKEYCLOAK.set(true);
+		RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true);
 	    }).doOnError(error -> System.err.println("Failed to queue Keycloak event: " + error.getMessage()))
 		    .subscribe();
 
@@ -134,7 +134,7 @@ public class KeycloakService {
 	FailedKeycloakEvent failedEvent = new FailedKeycloakEvent(null, username, null, password, "CREATE_USER", email,
 		LocalDateTime.now());
 
-	failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> RetryStatus.SHOULDRETRYKEYCLOAK.set(true))
+	failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true))
 		.subscribe();
     }
     

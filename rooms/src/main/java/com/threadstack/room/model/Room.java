@@ -32,11 +32,11 @@ public class Room {
 
     private final LocalDateTime createdAt = LocalDateTime.now();
 
-    private Long createdBy = -1L;
+    private String createdBy = "Admin";
 
     private RoomType roomType = RoomType.PUBLIC;
 
-    private Set<Long> members = new HashSet<>();
+    private Set<String> members = new HashSet<>();
     
-    private Set<Long> moderators = new HashSet<>();
+    private Set<String> moderators = new HashSet<>();
 }

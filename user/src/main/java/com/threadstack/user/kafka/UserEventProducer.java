@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.threadstack.user.kafka.dto.UserCreatedEvent;
 import com.threadstack.user.model.User;
 import com.threadstack.user.repository.FailedKafkaEventRepository;
-import com.threadstack.user.util.RetryStatus;
+import com.threadstack.user.util.RetryUtility;
 import com.threadstack.user.model.FailedKafkaEvent;
 
 @Service
@@ -46,7 +46,7 @@ public class UserEventProducer {
     private void queueFailedEvent(String eventJson) {
 	FailedKafkaEvent failedKafkaEvent = new FailedKafkaEvent(userCreatedTopic, eventJson);
 	failedKafkaEventRepository.save(failedKafkaEvent)
-        .doOnSuccess(savedEvent -> RetryStatus.SHOULDRETRYKAFKA.set(true))
+        .doOnSuccess(savedEvent -> RetryUtility.SHOULDRETRYKAFKA.set(true))
         .subscribe();
     }
 }

@@ -8,12 +8,12 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserConsumer {
+public class KafkaEventsListener {
 
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
-    public UserConsumer(UserRepository userRepository, ObjectMapper objectMapper) {
+    public KafkaEventsListener(UserRepository userRepository, ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
     }
