@@ -5,6 +5,8 @@ import com.threadstack.thread.model.Reply;
 import com.threadstack.thread.repository.ReplyRepository;
 import com.threadstack.thread.repository.ThreadRepository;
 import com.threadstack.thread.util.ValidationUtil;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -30,28 +32,31 @@ public class ReplyHandler {
     public Mono<ServerResponse> createReply(ServerRequest request) {
 	String threadId = request.queryParam("threadId").orElse(null);
 	String parentReplyId = request.queryParam("parentReplyId").orElse(null);
-
+	String userName = request.headers().firstHeader("X-User-Name");
+	if (userName == null) {
+	    return ServerResponse.status(HttpStatus.UNAUTHORIZED).bodyValue("Missing X-User-Name header");
+	}
 	if (threadId == null && parentReplyId == null) {
 	    return ServerResponse.badRequest().bodyValue("Either threadId or parentReply must be provided.");
 	}
-
 	return request.bodyToMono(Reply.class).flatMap(validationUtil::validate).flatMap(reply -> {
+	    reply.setUsername(userName);
 	    if (threadId != null) {
 		return threadRepository.findById(threadId)
 			.switchIfEmpty(Mono.error(new ResourceNotFoundException("Thread not found")))
 			.flatMap(thread -> {
 			    reply.setThreadId(threadId);
 			    return replyRepository.save(reply).flatMap(savedReply -> {
-				thread.getReplies().add(reply.getId());
+				thread.getReplies().add(savedReply.getId());
 				return threadRepository.save(thread).thenReturn(savedReply);
 			    });
 			});
-
 	    } else {
 		return replyRepository.findById(parentReplyId)
 			.switchIfEmpty(Mono.error(new ResourceNotFoundException("Parent reply not found")))
 			.flatMap(parent -> {
 			    reply.setParentReplyId(parentReplyId);
+			    reply.setThreadId(parent.getThreadId());
 			    return replyRepository.save(reply).flatMap(savedReply -> {
 				parent.getReplies().add(savedReply.getId());
 				return replyRepository.save(parent).thenReturn(savedReply);
@@ -60,7 +65,6 @@ public class ReplyHandler {
 	    }
 	}).flatMap(savedReply -> ServerResponse.created(URI.create("/replies/" + savedReply.getId()))
 		.contentType(MediaType.APPLICATION_JSON).bodyValue(savedReply));
-
     }
 
     public Mono<ServerResponse> getRepliesByThreadIdorParentReplyId(ServerRequest request) {
@@ -70,10 +74,10 @@ public class ReplyHandler {
 	if (threadId != null) {
 	    return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
 		    .body(replyRepository.findByThreadId(threadId), Reply.class);
-	}else if (parentReplyId != null) {
+	} else if (parentReplyId != null) {
 	    return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
 		    .body(replyRepository.findByParentReplyId(parentReplyId), Reply.class);
-	}else {
+	} else {
 	    return Mono.empty();
 	}
     }
@@ -85,14 +89,30 @@ public class ReplyHandler {
     }
 
     public Mono<ServerResponse> deleteReply(ServerRequest request) {
+	String userName = request.headers().firstHeader("X-User-Name");
 	String replyId = request.pathVariable("replyId");
+
+	if (userName == null) {
+	    return ServerResponse.status(HttpStatus.UNAUTHORIZED).bodyValue("Missing X-User-Name header");
+	}
+	if (replyId == null) {
+	    return ServerResponse.status(HttpStatus.BAD_REQUEST).bodyValue("Missing replyId pathVariable");
+	}
 
 	return replyRepository.findById(replyId)
 		.switchIfEmpty(Mono.error(new ResourceNotFoundException("Reply not found"))).flatMap(reply -> {
+		    if (!userName.equals(reply.getUsername())) {
+			if (reply.getUsername() == null && "[deleted]".equalsIgnoreCase(reply.getContent())) {
+			    return ServerResponse.status(HttpStatus.BAD_REQUEST)
+				    .bodyValue("Reply has already been deleted");
+			}
+			return ServerResponse.status(HttpStatus.FORBIDDEN)
+				.bodyValue("You are not the creator of this reply");
+		    }
 		    reply.setContent("[deleted]");
-		    return replyRepository.save(reply);
-		}).flatMap(updatedReply -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-			.bodyValue(updatedReply));
+		    reply.setUsername(null);
+		    return replyRepository.save(reply).then(ServerResponse.ok().bodyValue("Reply deleted"));
+		});
     }
 
 }
