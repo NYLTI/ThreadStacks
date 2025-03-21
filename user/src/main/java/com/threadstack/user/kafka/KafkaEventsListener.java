@@ -20,7 +20,18 @@ public class KafkaEventsListener {
     public void consumerRoomCreation(String roomJson) {
 	try {
 	    RoomCreatedEvent roomCreatedEvent = objectMapper.readValue(roomJson, RoomCreatedEvent.class);	    
-	    keycloakService.assignRoleToUser(roomCreatedEvent.getCreatedBy(), roomCreatedEvent.getRoomName());
+	    keycloakService.assignRoleToUser(roomCreatedEvent.getUsername(), roomCreatedEvent.getRoomName());
+	    keycloakService.assignRoleToUser(roomCreatedEvent.getUsername(), "CREATOR");
+	}catch( Exception e) {
+	    System.err.println(e.getMessage());
+	}
+    }
+    
+    @KafkaListener(topics = "moderator-created-topic", groupId = "user-service-group")
+    public void consumerModeratorCreation(String roomJson) {
+	try {
+	    RoomCreatedEvent roomCreatedEvent = objectMapper.readValue(roomJson, RoomCreatedEvent.class);	    
+	    keycloakService.assignRoleToUser(roomCreatedEvent.getUsername(), roomCreatedEvent.getRoomName());
 	}catch( Exception e) {
 	    System.err.println(e.getMessage());
 	}

@@ -11,7 +11,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import com.threadstack.room.exception.RoomNameAlreadyExistsException;
 import com.threadstack.room.kafka.KafkaEventsProducer;
 import com.threadstack.room.model.Room;
-import com.threadstack.room.model.RoomCreatedEvent;
+import com.threadstack.room.model.FailedKafkaEvent;
 import com.threadstack.room.repository.RoomRepository;
 import com.threadstack.room.util.ValidationUtil;
 
@@ -32,7 +32,7 @@ public class RoomHandler {
 		    room.getModerators().add(room.getCreatedBy());
 		    return roomRepository.save(room).doOnSuccess(savedRoom -> {
 			try {
-			    RoomCreatedEvent event = new RoomCreatedEvent(savedRoom.getName(),
+			    FailedKafkaEvent event = new FailedKafkaEvent(savedRoom.getName(),
 				    savedRoom.getCreatedBy());
 			    kafkaEventsProducer.sendRoomCreatedEvent(event);
 			} catch (Exception e) {

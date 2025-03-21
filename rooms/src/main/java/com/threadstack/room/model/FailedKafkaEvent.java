@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document
-public class RoomCreatedEvent {
+public class FailedKafkaEvent {
     @Indexed(unique = true)
     private String roomName;
-    private String createdBy;
+    private String username;
 }

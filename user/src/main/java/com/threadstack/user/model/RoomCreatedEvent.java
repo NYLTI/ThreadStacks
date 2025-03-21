@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RoomCreatedEvent {
     private String roomName;
-    private String createdBy;
+    private String username;
 }
