@@ -67,21 +67,16 @@ public class KeycloakService {
 	    if (userId == null)
 		throw new RuntimeException("User not found: " + username);
 
-	    RoleRepresentation role = getRole(roleName);
 	    createRoleIfNotExists(roleName);
+	    RoleRepresentation role = getRole(roleName);
 	    if (role == null)
 		throw new RuntimeException("Role not found: " + roleName);
 
 	    keycloak.realm("ThreadStacks").users().get(userId).roles().realmLevel()
 		    .add(Collections.singletonList(role));
 	} catch (Exception e) {
-	    FailedKeycloakEvent failedEvent = new FailedKeycloakEvent(null, username, roleName, null, "USER", null,
-		    LocalDateTime.now());
-
-	    failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> {
-		RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true);
-	    }).doOnError(error -> System.err.println("Failed to queue Keycloak event: " + error.getMessage()))
-		    .subscribe();
+	    System.err.println(e.getMessage());
+	    queueRoleAssignmentEvent(username, roleName);
 
 	}
     }
@@ -103,6 +98,7 @@ public class KeycloakService {
 	    newRole.setDescription("Dynamically created role for moderation");
 	    rolesResource.create(newRole);
 	} catch (Exception e) {
+	    System.err.println(e.getMessage());
 	}
     }
 
@@ -133,7 +129,19 @@ public class KeycloakService {
 	FailedKeycloakEvent failedEvent = new FailedKeycloakEvent(null, username, null, password, "CREATE_USER", email,
 		LocalDateTime.now());
 
-	failedKeycloakEventRepository.save(failedEvent).doOnSuccess(event -> RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true))
-		.subscribe();
-    }  
+	failedKeycloakEventRepository.save(failedEvent)
+		.doOnSuccess(event -> RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true)).subscribe();
+    }
+
+    private void queueRoleAssignmentEvent(String username, String rolename) {
+	if (failedKeycloakEventRepository.findByUsernameAndRoleName(username, rolename).isPresent()) {
+	    return;
+	}
+
+	FailedKeycloakEvent failedEvent = new FailedKeycloakEvent(null, username, null, null, "ASSIGN_ROLE", null,
+		LocalDateTime.now());
+
+	failedKeycloakEventRepository.save(failedEvent)
+		.doOnSuccess(event -> RetryUtility.SHOULDRETRYKEYCLOAKUSERCREATION.set(true)).subscribe();
+    }
 }

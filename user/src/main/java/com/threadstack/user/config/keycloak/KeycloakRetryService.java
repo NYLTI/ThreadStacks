@@ -26,18 +26,21 @@ public class KeycloakRetryService {
        
         if (keycloakService.isKeycloakAlive()) {
             failedKeycloakEventRepository.findAll()
-                .flatMap(this::processAndDeleteEvent)
+                .flatMap(this::processAndDeleteEventCreateUser)
                 .doOnComplete(this::checkAndStopRetry)
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
         }
     }
 
-    private Mono<Void> processAndDeleteEvent(FailedKeycloakEvent event) {
+    private Mono<Void> processAndDeleteEventCreateUser(FailedKeycloakEvent event) {
         return Mono.fromRunnable(() -> {
             switch (event.getEventType()) {
                 case "CREATE_USER":
                     keycloakService.createUser(event.getUsername(), event.getEmail(), event.getPassword());
+                    break;
+                case "ASSIGN_ROLE":
+                    keycloakService.assignRoleToUser(event.getUsername(), event.getRoleName());
                     break;
                 default:
                     System.err.println("Unknown Keycloak event type: " + event.getEventType());
