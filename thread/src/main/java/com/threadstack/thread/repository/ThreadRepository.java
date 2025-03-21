@@ -6,7 +6,7 @@ import reactor.core.publisher.Flux;
 
 public interface ThreadRepository extends ReactiveMongoRepository<Thread, String> {
 
-    Flux<Thread> findByRoomId(String roomId);
+    Flux<Thread> findByRoomName(String roomName);
 
-    Flux<Thread> findByAuthorId(Long authorId);
+    Flux<Thread> findByUserName(String username);
 }

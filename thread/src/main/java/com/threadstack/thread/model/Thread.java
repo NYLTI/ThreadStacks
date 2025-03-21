@@ -8,7 +8,6 @@ import java.util.Set;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,11 +30,10 @@ public class Thread {
     @Size(max = 2000, message = "Thread content cannot exceed 2000 characters")
     private String content;
     
-    @NotNull(message = "Author cannot be blank")
-    private Long authorId;
+    private String userName;
     
-    @NotBlank(message = "Room id cannot be blank")
-    private String roomId;
+    @NotBlank(message = "Room name cannot be blank")
+    private String roomName;
     
     private final LocalDateTime createdAt = LocalDateTime.now();
     
